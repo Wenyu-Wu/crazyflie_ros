@@ -17,10 +17,15 @@ from cflib.crazyflie import Crazyflie
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist, Pose
 from crazyflie_ros.msg import Attitude_Setpoint
+from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+
+from cflib.crazyflie.log import LogConfig
+from cflib.crazyflie.syncLogger import SyncLogger
 
 command_goal = Attitude_Setpoint()
 command_lock = threading.Lock()
 logging.basicConfig(level=logging.ERROR)
+uri = 'radio://0/80/2M/E7E7E7E7E7'
 
 old_t = time.time()
 
@@ -46,8 +51,8 @@ def setpoint_manager(drone):
         command_lock.acquire()
         drone._cf.commander.send_setpoint(command_goal.roll, command_goal.pitch, command_goal.yaw_rate, int(command_goal.thrust))
         command_lock.release()
-        print("*************FPS:***************", 1/(time.time() - old_t))
-        old_t = time.time()
+        # print("*************FPS:***************", 1/(time.time() - old_t))
+        # old_t = time.time()
         r.sleep()
 
 def radians_to_degrees(command):
@@ -60,6 +65,22 @@ def radians_to_degrees(command):
 
     return new_command
 
+def simple_log(scf, logconf):
+    global command_goal, old_t
+    while not rospy.is_shutdown():
+        with SyncLogger(scf, lg_stab) as logger:
+
+            for log_entry in logger:
+                # print(log_entry)
+                timestamp = log_entry[0]
+                data = log_entry[1]
+                logconf_name = log_entry[2]
+
+                print('[%d][%s]: %s' % (timestamp, logconf_name, data))
+                print("*************FPS:***************", 1/(time.time() - old_t))
+                old_t = time.time()
+
+                # break
 
 class CrazyflieComm:
     """Example that connects to a Crazyflie and ramps the motors up/down and
@@ -143,15 +164,22 @@ if __name__ == '__main__':
 
     r = rospy.Rate(200)
     crazy_thread = threading.Thread(target=setpoint_manager,daemon=True,args=[le])
-
+    
+    lg_stab = LogConfig(name='Stabilizer', period_in_ms=10)
+    lg_stab.add_variable('stabilizer.roll', 'float')
+    lg_stab.add_variable('stabilizer.pitch', 'float')
+    lg_stab.add_variable('stabilizer.yaw', 'float')
+    lg_stab.add_variable('posCtl.VXi','float')
+    # with SyncCrazyflie(uri, cf=le._cf) as scf:
+    crazy_thread_log = threading.Thread(target=simple_log,args=[le._cf,lg_stab])
     while not rospy.is_shutdown():
-        print(command_goal)
-
+        # print(command_goal)
+        # simple_log(scf, lg_stab)
         if le.start_thread:
 
             print("Successfully connected to Crazyflie")
             crazy_thread.start()
+            crazy_thread_log.start()
             le.start_thread = False
 
         r.sleep()
-

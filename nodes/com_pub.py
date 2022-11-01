@@ -15,7 +15,7 @@ def talker():
         ll.roll = 0
         ll.pitch = 0
         ll.yaw_rate = 0
-        ll.thrust = 5000
+        ll.thrust = 0000
         pub.publish(ll)
         rate.sleep()
 
