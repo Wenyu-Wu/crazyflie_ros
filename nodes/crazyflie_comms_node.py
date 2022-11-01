@@ -166,10 +166,31 @@ if __name__ == '__main__':
     crazy_thread = threading.Thread(target=setpoint_manager,daemon=True,args=[le])
     
     lg_stab = LogConfig(name='Stabilizer', period_in_ms=10)
-    lg_stab.add_variable('stabilizer.roll', 'float')
+
+    lg_stab.add_variable('stabilizer.roll', 'float')        # Angles
     lg_stab.add_variable('stabilizer.pitch', 'float')
-    lg_stab.add_variable('stabilizer.yaw', 'float')
-    lg_stab.add_variable('posCtl.VXi','float')
+    lg_stab.add_variable('stabilizer.yaw', 'float')     
+    
+    lg_stab.add_variable('gyro.x','float')      # Angular velocity 
+    lg_stab.add_variable('gyro.y','float')
+    lg_stab.add_variable('gyro.z','float')
+
+    lg_stab.add_variable('posCtl.Xi','float')       # Integral errors for position controller 
+    lg_stab.add_variable('posCtl.Yi','float')
+    lg_stab.add_variable('posCtl.Zi','float')
+
+    lg_stab.add_variable('posCtl.VXi','float')      # Integral errors for velocity controller
+    lg_stab.add_variable('posCtl.VYi','float')
+    lg_stab.add_variable('posCtl.VZi','float')
+
+    lg_stab.add_variable('pid_attitude.roll_outI','float')      # Integral errors for angular position controller
+    lg_stab.add_variable('pid_attitude.pitch_outI','float')
+    lg_stab.add_variable('pid_attitude.yaw_outI','float')
+
+    lg_stab.add_variable('pid_rate.roll_outI','float')      # Integral errors for angular velocity controller
+    lg_stab.add_variable('pid_rate.pitch_outI','float')
+    lg_stab.add_variable('pid_rate.yaw_outI','float')
+
     # with SyncCrazyflie(uri, cf=le._cf) as scf:
     crazy_thread_log = threading.Thread(target=simple_log,args=[le._cf,lg_stab])
     while not rospy.is_shutdown():
