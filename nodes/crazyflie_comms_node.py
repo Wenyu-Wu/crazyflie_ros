@@ -18,6 +18,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist, Pose
 from crazyflie_ros.msg import Attitude_Setpoint
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
+import numpy as np
 
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
@@ -28,6 +29,8 @@ logging.basicConfig(level=logging.ERROR)
 uri = 'radio://0/80/2M/E7E7E7E7E7'
 
 old_t = time.time()
+
+states = np.ones(21)
 
 def command_callback(command):
     global command_goal
@@ -68,7 +71,7 @@ def radians_to_degrees(command):
 def simple_log_1(scf, lg_stab):
     global command_goal, old_t
     while not rospy.is_shutdown():
-        print("yay1")
+        
         with SyncLogger(scf, lg_stab) as logger:
             print(logger)
             for log_entry in logger:
@@ -77,16 +80,25 @@ def simple_log_1(scf, lg_stab):
                 data = log_entry[1]
                 logconf_name = log_entry[2]
 
+                states[3] = data['stabilizer.roll']
+                states[4] = data['stabilizer.pitch']
+                states[5] = data['stabilizer.yaw']
+
+                states[6] = data['gyro.x']
+                states[7] = data['gyro.y']
+                states[8] = data['gyro.z']
+
+                print(type(data))
                 print('[%d][%s]: %s' % (timestamp, logconf_name, data))
                 print("*************FPS:***************", 1/(time.time() - old_t))
                 old_t = time.time()
-
-                # break
+                print("yay1", states)
+                break
 
 def simple_log_2(scf, lg_stab):
     global command_goal, old_t
     while not rospy.is_shutdown():
-        print("yay2")
+        # print("yay2")
         with SyncLogger(scf, lg_stab) as logger:
             print(logger)
             for log_entry in logger:
@@ -95,14 +107,24 @@ def simple_log_2(scf, lg_stab):
                 data = log_entry[1]
                 logconf_name = log_entry[2]
 
+                states[9] = data['posCtl.Xi']
+                states[10] = data['posCtl.Yi']
+                states[11] = data['posCtl.Zi']
+
+                states[12] = data['posCtl.VXi']
+                # states[13] = data['posCtl.VYi']
+                states[14] = data['posCtl.VZi']
+
                 print('[%d][%s]: %s' % (timestamp, logconf_name, data))
                 print("*************FPS:***************", 1/(time.time() - old_t))
+                print("yay2", states)
                 old_t = time.time()
+                break
 
 def simple_log_3(scf, lg_stab):
     global command_goal, old_t
     while not rospy.is_shutdown():
-        print("yay3")
+        # print("yay3")
         with SyncLogger(scf, lg_stab) as logger:
             print(logger)
             for log_entry in logger:
@@ -111,14 +133,24 @@ def simple_log_3(scf, lg_stab):
                 data = log_entry[1]
                 logconf_name = log_entry[2]
 
+                states[15] = data['pid_attitude.roll_outI']
+                states[16] = data['pid_attitude.pitch_outI']
+                states[17] = data['pid_attitude.yaw_outI']
+
+                states[18] = data['pid_rate.roll_outI']
+                states[19] = data['pid_rate.pitch_outI']
+                states[20] = data['pid_rate.yaw_outI']
+
                 print('[%d][%s]: %s' % (timestamp, logconf_name, data))
                 print("*************FPS:***************", 1/(time.time() - old_t))
+                print("yay3", states)
                 old_t = time.time()
+                break
 
 def simple_log_4(scf, lg_stab):
     global command_goal, old_t
     while not rospy.is_shutdown():
-        print("yay4")
+        # print("yay4")
         with SyncLogger(scf, lg_stab) as logger:
             print(logger)
             for log_entry in logger:
@@ -127,9 +159,15 @@ def simple_log_4(scf, lg_stab):
                 data = log_entry[1]
                 logconf_name = log_entry[2]
 
+                states[0] = data['stateEstimate.vx']
+                states[1] = data['stateEstimate.vy']
+                states[2] = data['stateEstimate.vz']
+
                 print('[%d][%s]: %s' % (timestamp, logconf_name, data))
                 print("*************FPS:***************", 1/(time.time() - old_t))
                 old_t = time.time()
+                print("yay4", states)
+                break
 
 class CrazyflieComm:
     """Example that connects to a Crazyflie and ramps the motors up/down and
