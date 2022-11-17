@@ -65,11 +65,12 @@ def radians_to_degrees(command):
 
     return new_command
 
-def simple_log(scf, logconf):
+def simple_log_1(scf, lg_stab):
     global command_goal, old_t
     while not rospy.is_shutdown():
+        print("yay1")
         with SyncLogger(scf, lg_stab) as logger:
-
+            print(logger)
             for log_entry in logger:
                 # print(log_entry)
                 timestamp = log_entry[0]
@@ -82,10 +83,58 @@ def simple_log(scf, logconf):
 
                 # break
 
+def simple_log_2(scf, lg_stab):
+    global command_goal, old_t
+    while not rospy.is_shutdown():
+        print("yay2")
+        with SyncLogger(scf, lg_stab) as logger:
+            print(logger)
+            for log_entry in logger:
+                # print(log_entry)
+                timestamp = log_entry[0]
+                data = log_entry[1]
+                logconf_name = log_entry[2]
+
+                print('[%d][%s]: %s' % (timestamp, logconf_name, data))
+                print("*************FPS:***************", 1/(time.time() - old_t))
+                old_t = time.time()
+
+def simple_log_3(scf, lg_stab):
+    global command_goal, old_t
+    while not rospy.is_shutdown():
+        print("yay3")
+        with SyncLogger(scf, lg_stab) as logger:
+            print(logger)
+            for log_entry in logger:
+                # print(log_entry)
+                timestamp = log_entry[0]
+                data = log_entry[1]
+                logconf_name = log_entry[2]
+
+                print('[%d][%s]: %s' % (timestamp, logconf_name, data))
+                print("*************FPS:***************", 1/(time.time() - old_t))
+                old_t = time.time()
+
+def simple_log_4(scf, lg_stab):
+    global command_goal, old_t
+    while not rospy.is_shutdown():
+        print("yay4")
+        with SyncLogger(scf, lg_stab) as logger:
+            print(logger)
+            for log_entry in logger:
+                # print(log_entry)
+                timestamp = log_entry[0]
+                data = log_entry[1]
+                logconf_name = log_entry[2]
+
+                print('[%d][%s]: %s' % (timestamp, logconf_name, data))
+                print("*************FPS:***************", 1/(time.time() - old_t))
+                old_t = time.time()
+
 class CrazyflieComm:
     """Example that connects to a Crazyflie and ramps the motors up/down and
     the disconnects"""
-    
+
     start_thread = False
 
     def __init__(self, link_uri):
@@ -107,7 +156,7 @@ class CrazyflieComm:
         has been connected and the TOCs have been downloaded."""
 
         # Start a separate thread to do the motor control.
-        # Anything done in here will hijack the external thread 
+        # Anything done in here will hijack the external thread
         self.start_thread = True
 
     def _connection_failed(self, link_uri, msg):
@@ -148,51 +197,64 @@ if __name__ == '__main__':
                 #     le = CrazyflieComm(i[0])
                 #     found = True
                 if(i[0]=='radio://0/80/2M'):
+                # if(i[0]=='usb://0'):
                     le = CrazyflieComm(i[0])
                     found = True
                 else:
                     print('looking for radio://0/80/2M')
-                    
+
         elif found == False :
             print('\rAttempt ' + str(tries) + ' failed, no correct Crazyflie found         ', end =" ")
         if found == True:
             break
         r.sleep()
 
-    rospy.Subscriber('controller/ypr',Attitude_Setpoint,command_callback) 
+    rospy.Subscriber('controller/ypr',Attitude_Setpoint,command_callback)
     # rospy.Subscriber('cmd_vel',Twist,keyboard_callback)
 
     r = rospy.Rate(200)
     crazy_thread = threading.Thread(target=setpoint_manager,daemon=True,args=[le])
-    
-    lg_stab = LogConfig(name='Stabilizer', period_in_ms=10)
 
-    lg_stab.add_variable('stabilizer.roll', 'float')        # Angles
-    lg_stab.add_variable('stabilizer.pitch', 'float')
-    lg_stab.add_variable('stabilizer.yaw', 'float')     
-    
-    lg_stab.add_variable('gyro.x','float')      # Angular velocity 
-    lg_stab.add_variable('gyro.y','float')
-    lg_stab.add_variable('gyro.z','float')
+    # Logging Groups
+    lg_stab1 = LogConfig(name='Pose', period_in_ms=10)
+    lg_stab2 = LogConfig(name='Pose-Vel Integral error', period_in_ms=10)
+    lg_stab3 = LogConfig(name='Angular Pose-Vel Integral error', period_in_ms=10)
+    lg_stab4 = LogConfig(name='Velocity Estimate', period_in_ms=10)
 
-    lg_stab.add_variable('posCtl.Xi','float')       # Integral errors for position controller 
-    lg_stab.add_variable('posCtl.Yi','float')
-    lg_stab.add_variable('posCtl.Zi','float')
+    lg_stab1.add_variable('stabilizer.roll', 'float')        # Angles
+    lg_stab1.add_variable('stabilizer.pitch', 'float')
+    lg_stab1.add_variable('stabilizer.yaw', 'float')
 
-    lg_stab.add_variable('posCtl.VXi','float')      # Integral errors for velocity controller
-    lg_stab.add_variable('posCtl.VYi','float')
-    lg_stab.add_variable('posCtl.VZi','float')
+    lg_stab1.add_variable('gyro.x','float')      # Angular velocity
+    lg_stab1.add_variable('gyro.y','float')
+    lg_stab1.add_variable('gyro.z','float')
 
-    lg_stab.add_variable('pid_attitude.roll_outI','float')      # Integral errors for angular position controller
-    lg_stab.add_variable('pid_attitude.pitch_outI','float')
-    lg_stab.add_variable('pid_attitude.yaw_outI','float')
+    lg_stab2.add_variable('posCtl.Xi','float')       # Integral errors for position controller
+    lg_stab2.add_variable('posCtl.Yi','float')
+    lg_stab2.add_variable('posCtl.Zi','float')
 
-    lg_stab.add_variable('pid_rate.roll_outI','float')      # Integral errors for angular velocity controller
-    lg_stab.add_variable('pid_rate.pitch_outI','float')
-    lg_stab.add_variable('pid_rate.yaw_outI','float')
+    lg_stab2.add_variable('posCtl.VXi','float')      # Integral errors for velocity controller
+    # lg_stab2.add_variable('posCtl.VYi','float')
+    lg_stab2.add_variable('posCtl.VZi','float')
+
+    lg_stab3.add_variable('pid_attitude.roll_outI','float')      # Integral errors for angular position controller
+    lg_stab3.add_variable('pid_attitude.pitch_outI','float')
+    lg_stab3.add_variable('pid_attitude.yaw_outI','float')
+
+    lg_stab3.add_variable('pid_rate.roll_outI','float')      # Integral errors for angular velocity controller
+    lg_stab3.add_variable('pid_rate.pitch_outI','float')
+    lg_stab3.add_variable('pid_rate.yaw_outI','float')
+
+    lg_stab4.add_variable('stateEstimate.vx','float')      # state estimated velocity
+    lg_stab4.add_variable('stateEstimate.vy','float')
+    lg_stab4.add_variable('stateEstimate.vz','float')
 
     # with SyncCrazyflie(uri, cf=le._cf) as scf:
-    crazy_thread_log = threading.Thread(target=simple_log,args=[le._cf,lg_stab])
+    crazy_thread_log_1 = threading.Thread(target=simple_log_1,args=[le._cf,lg_stab1])
+    crazy_thread_log_2 = threading.Thread(target=simple_log_2,args=[le._cf,lg_stab2])
+    crazy_thread_log_3 = threading.Thread(target=simple_log_3,args=[le._cf,lg_stab3])
+    crazy_thread_log_4 = threading.Thread(target=simple_log_4,args=[le._cf,lg_stab4])
+
     while not rospy.is_shutdown():
         # print(command_goal)
         # simple_log(scf, lg_stab)
@@ -200,7 +262,10 @@ if __name__ == '__main__':
 
             print("Successfully connected to Crazyflie")
             crazy_thread.start()
-            crazy_thread_log.start()
+            crazy_thread_log_1.start()
+            crazy_thread_log_2.start()
+            crazy_thread_log_3.start()
+            crazy_thread_log_4.start()
             le.start_thread = False
 
         r.sleep()
